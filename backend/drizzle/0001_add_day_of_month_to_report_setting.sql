@@ -1,0 +1,1 @@
+ALTER TABLE "report_setting" ADD COLUMN "day_of_month" integer DEFAULT 1 NOT NULL;
