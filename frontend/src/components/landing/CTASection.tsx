@@ -91,7 +91,7 @@ export function CTASection() {
                                 className="flex flex-col sm:flex-row gap-3 mb-8"
                             >
                                 <Link
-                                    href="/auth"
+                                    href="/auth/sign-up"
                                     className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:-translate-y-0.5 transition-all duration-200"
                                 >
                                     Get Started Free

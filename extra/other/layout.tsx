@@ -1,8 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
-// import { Providers } from "@/providers/auth-providers";
-import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/providers/auth-providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,10 +36,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        {/* <Providers> */}
-          {children}
-          {/* </Providers> */}
-        <Toaster richColors position="top-right" />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

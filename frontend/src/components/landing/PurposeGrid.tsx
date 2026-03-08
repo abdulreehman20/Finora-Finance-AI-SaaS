@@ -9,33 +9,33 @@ const purposes = [
         icon: Zap,
         iconBg: "from-green-500 to-emerald-600",
         iconShadow: "shadow-green-500/40",
-        heading: "Instant Tracking",
+        heading: "Income & Expense Tracking",
         description:
-            "Log income and expenses in seconds. Categorize transactions automatically with AI-powered smart tagging.",
-    },
-    {
-        icon: ShieldCheck,
-        iconBg: "from-blue-500 to-cyan-600",
-        iconShadow: "shadow-blue-500/40",
-        heading: "Bank-Grade Security",
-        description:
-            "Your financial data is protected with end-to-end encryption and enterprise-level security protocols.",
+            "Add and track every income and expense in one place. See exactly where your money goes with clear, organized records.",
     },
     {
         icon: BarChart3,
-        iconBg: "from-red-500 to-rose-600",
-        iconShadow: "shadow-red-500/40",
-        heading: "Deep Insights",
+        iconBg: "from-blue-500 to-cyan-600",
+        iconShadow: "shadow-blue-500/40",
+        heading: "Track Your Money",
         description:
-            "Visualize spending trends with beautiful charts. Get weekly, monthly, and yearly financial breakdowns.",
+            "Visualize your finances with charts and breakdowns. Understand your spending patterns and stay in control of your money.",
     },
     {
         icon: RefreshCcw,
         iconBg: "from-amber-500 to-orange-600",
         iconShadow: "shadow-amber-500/40",
-        heading: "AI Reports",
+        heading: "AI-Generated Reports",
         description:
-            "Receive automated AI-generated reports delivered straight to your inbox. Stay on top of your finances.",
+            "Get weekly or monthly AI-generated reports delivered to your inbox. Stay on top of your finances without the manual work.",
+    },
+    {
+        icon: ShieldCheck,
+        iconBg: "from-red-500 to-rose-600",
+        iconShadow: "shadow-red-500/40",
+        heading: "AI Assistant",
+        description:
+            "Add income or expenses through chat—no manual entry needed. The AI agent creates reports, helps you manage money, and explains where it goes.",
     },
 ];
 

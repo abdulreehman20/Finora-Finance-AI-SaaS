@@ -39,7 +39,7 @@ Create [.env](file:///C:/Users/pc/OneDrive/Desktop/Data%20%28E%29/Finora-AI/back
 DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
 
 # Your Next.js app URL — must match exactly what the browser uses
-FRONTEND_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Better Auth
 BETTER_AUTH_APP_NAME="Finora AI"
@@ -95,11 +95,11 @@ bun run dev          # or npm run dev
 
 ### 1.4 CORS Configuration
 
-The backend allows only the origin defined in `FRONTEND_URL`. Allowed HTTP methods: `GET`, `POST`, `PUT`, `DELETE`. Credentials (cookies) are enabled.
+The backend allows only the origin defined in `NEXT_PUBLIC_APP_URL`. Allowed HTTP methods: `GET`, `POST`, `PUT`, `DELETE`. Credentials (cookies) are enabled.
 
 ```
 # Backend src/index.ts — CORS config (for reference)
-origin: process.env.FRONTEND_URL   // e.g. http://localhost:3000
+origin: process.env.NEXT_PUBLIC_APP_URL   // e.g. http://localhost:3000
 credentials: true                   // cookies required for session
 methods: ["GET", "POST", "PUT", "DELETE"]
 ```

@@ -59,14 +59,14 @@ export function LandingNavbar() {
                     {/* CTA Buttons */}
                     <div className="flex items-center gap-3">
                         <NavbarButton
-                            href="/auth"
+                            href="/auth/sign-in"
                             variant="secondary"
                             className="text-zinc-300 hover:text-white bg-transparent border border-white/20 hover:border-white/40 rounded-full"
                         >
                             Login
                         </NavbarButton>
                         <NavbarButton
-                            href="/auth"
+                            href="/auth/sign-up"
                             variant="gradient"
                             className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 rounded-full shadow-lg shadow-green-500/30 hover:shadow-green-500/50 transition-all duration-300"
                         >

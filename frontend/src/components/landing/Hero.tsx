@@ -130,14 +130,14 @@ export function HeroSection() {
                     className="flex flex-col sm:flex-row gap-4"
                 >
                     <Link
-                        href="/auth"
+                        href="/auth/sign-up"
                         className="group flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-full shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:-translate-y-1 transition-all duration-300 text-base"
                     >
                         Get Started Free
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                     </Link>
                     <Link
-                        href="/auth"
+                        href="/auth/sign-in"
                         className="flex items-center justify-center gap-2 px-8 py-4 border border-white/20 text-white font-semibold rounded-full hover:border-green-500/40 hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 text-base backdrop-blur-sm"
                     >
                         Login to Dashboard

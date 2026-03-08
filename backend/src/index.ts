@@ -15,13 +15,13 @@ const PORT = 7000;
 logger.info("Starting Express server initialization");
 
 app.use(
-	cors({
-		origin: process.env.FRONTEND_URL, // React app URL
-		methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-		credentials: true, // allow cookies
-	}),
+  cors({
+    origin: process.env.NEXT_PUBLIC_APP_URL, // React app URL
+    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+    credentials: true, // allow cookies
+  }),
 );
-logger.info(`CORS configured with origin: ${process.env.FRONTEND_URL}`);
+logger.info(`CORS configured with origin: ${process.env.NEXT_PUBLIC_APP_URL}`);
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 logger.info("Better Auth middleware configured for /api/auth/*");
@@ -42,29 +42,29 @@ app.use("/api", router);
 
 // Api for Health Test
 app.get("/api/health", (_req, res) => {
-	logger.info("Received request at /api/health");
-	res.json({ message: "API is working!" });
+  logger.info("Received request at /api/health");
+  res.json({ message: "API is working!" });
 });
 
 // Error handling middleware (should be last)
 app.use(errorHandler);
 
 const server = app.listen(PORT, async () => {
-	logger.info(`Server running at http://localhost:${PORT}`);
+  logger.info(`Server running at http://localhost:${PORT}`);
 
-	if (process.env.NODE_ENV === "development") {
-		await initializeCrons();
-	}
+  if (process.env.NODE_ENV === "development") {
+    await initializeCrons();
+  }
 });
 
 server.on("error", (error) => {
-	logger.error("Server error:", error);
+  logger.error("Server error:", error);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-	logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
 process.on("uncaughtException", (error) => {
-	logger.error("Uncaught Exception:", error);
+  logger.error("Uncaught Exception:", error);
 });

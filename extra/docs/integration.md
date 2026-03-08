@@ -218,7 +218,7 @@ DATABASE_URL="postgres://user:password@host:5432/dbname"
 BETTER_AUTH_SECRET="your-generated-better-auth-secret"
 BETTER_AUTH_APP_NAME="Finora AI"
 
-FRONTEND_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 RESEND_API_KEY="your-resend-api-key"
 MAILER_SENDER="Finora AI <no-reply@example.com>"
