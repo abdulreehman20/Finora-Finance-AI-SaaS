@@ -8,7 +8,7 @@ const navLinks = [
   { name: "Overview", href: "/dashboard" },
   { name: "Transactions", href: "/dashboard/transactions" },
   { name: "Reports", href: "/dashboard/reports" },
-  // { name: "Ai Chats", href: "/dashboard/chat" },
+  { name: "Ai Chats", href: "/dashboard/chat" },
   { name: "Settings", href: "/dashboard/settings" },
 ];
 

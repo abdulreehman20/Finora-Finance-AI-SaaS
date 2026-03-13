@@ -13,7 +13,6 @@ import {
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { bulkImportTransactionsAction } from "@/actions/transactions/actions";
-import { parseCSV } from "@/lib/helper";
 import {
   Sheet,
   SheetContent,
@@ -21,6 +20,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { parseCSV } from "@/lib/helper";
 import type { PaymentMethod, TransactionType } from "@/types/transaction";
 
 // ── Column mapping types ──────────────────────────────────────────────────────
@@ -182,18 +182,32 @@ export function BulkImportSheet({
         .map((row) => {
           const title = getCellValue(row, "Title") || "Transaction";
           const typeVal = getCellValue(row, "Type").toUpperCase();
-          const type = (typeVal === "INCOME" ? "INCOME" : "EXPENSE") as TransactionType;
+          const type = (
+            typeVal === "INCOME" ? "INCOME" : "EXPENSE"
+          ) as TransactionType;
           const amountStr = getCellValue(row, "Amount");
           const amount = Math.round((parseFloat(amountStr) || 0) * 100);
           const category = getCellValue(row, "Category") || "Other";
           const description = getCellValue(row, "Description") || undefined;
           const dateStr = getCellValue(row, "Date");
-          const date = dateStr && !isNaN(Date.parse(dateStr))
-            ? new Date(dateStr).toISOString()
-            : new Date().toISOString();
-          const pmVal = getCellValue(row, "PaymentMethod").toUpperCase().replace(/\s+/g, "_");
-          const validPMs = ["CARD", "BANK_TRANSFER", "MOBILE_PAYMENT", "AUTO_DEBIT", "CASH", "OTHER"];
-          const paymentMethod = (validPMs.includes(pmVal) ? pmVal : "OTHER") as PaymentMethod;
+          const date =
+            dateStr && !isNaN(Date.parse(dateStr))
+              ? new Date(dateStr).toISOString()
+              : new Date().toISOString();
+          const pmVal = getCellValue(row, "PaymentMethod")
+            .toUpperCase()
+            .replace(/\s+/g, "_");
+          const validPMs = [
+            "CARD",
+            "BANK_TRANSFER",
+            "MOBILE_PAYMENT",
+            "AUTO_DEBIT",
+            "CASH",
+            "OTHER",
+          ];
+          const paymentMethod = (
+            validPMs.includes(pmVal) ? pmVal : "OTHER"
+          ) as PaymentMethod;
 
           return {
             title,
@@ -214,7 +228,9 @@ export function BulkImportSheet({
       }
 
       await bulkImportTransactionsAction(transactions);
-      toast.success(`Successfully imported ${transactions.length} transactions!`);
+      toast.success(
+        `Successfully imported ${transactions.length} transactions!`,
+      );
       onSaved();
       onOpenChange(false);
       reset();
@@ -264,7 +280,8 @@ export function BulkImportSheet({
               <p className="text-xs text-zinc-400">
                 Upload a CSV with columns:{" "}
                 <code className="text-green-400">
-                  title, type, amount, category, description, date, paymentMethod
+                  title, type, amount, category, description, date,
+                  paymentMethod
                 </code>
               </p>
               <div
@@ -312,7 +329,10 @@ export function BulkImportSheet({
                     className="grid grid-cols-2 gap-4 items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2.5"
                   >
                     <div className="flex items-center gap-2 text-sm text-zinc-300">
-                      <IconFileSpreadsheet size={14} className="text-green-400 shrink-0" />
+                      <IconFileSpreadsheet
+                        size={14}
+                        className="text-green-400 shrink-0"
+                      />
                       <span className="truncate">{m.csvColumn}</span>
                     </div>
                     <select
@@ -324,7 +344,9 @@ export function BulkImportSheet({
                     >
                       {TRANSACTION_FIELDS.map((f) => (
                         <option key={f} value={f}>
-                          {f === "Skip" ? "Skip" : `${f} ${["Title", "Type"].includes(f) ? "*" : ""}`}
+                          {f === "Skip"
+                            ? "Skip"
+                            : `${f} ${["Title", "Type"].includes(f) ? "*" : ""}`}
                         </option>
                       ))}
                     </select>

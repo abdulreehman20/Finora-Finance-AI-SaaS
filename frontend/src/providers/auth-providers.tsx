@@ -26,7 +26,7 @@ export function Providers({ children }: { children: ReactNode }) {
       social={{ providers: ["google"] }}
       credentials={{ username: true, usernameRequired: true }}
       account={{
-        basePath: "/dashboard/settings/",
+        basePath: "/dashboard/",
         fields: ["image", "name", "username"],
       }}
     >

@@ -49,22 +49,26 @@ app.get("/api/health", (_req, res) => {
 // Error handling middleware (should be last)
 app.use(errorHandler);
 
-const server = app.listen(PORT, async () => {
-  logger.info(`Server running at http://localhost:${PORT}`);
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  const server = app.listen(PORT, async () => {
+    logger.info(`Server running at http://localhost:${PORT}`);
 
-  if (process.env.NODE_ENV === "development") {
-    await initializeCrons();
-  }
-});
+    if (process.env.NODE_ENV === "development") {
+      await initializeCrons();
+    }
+  });
 
-server.on("error", (error) => {
-  logger.error("Server error:", error);
-});
+  server.on("error", (error) => {
+    logger.error("Server error:", error);
+  });
 
-process.on("unhandledRejection", (reason, promise) => {
-  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
-});
+  process.on("unhandledRejection", (reason, promise) => {
+    logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+  });
 
-process.on("uncaughtException", (error) => {
-  logger.error("Uncaught Exception:", error);
-});
+  process.on("uncaughtException", (error) => {
+    logger.error("Uncaught Exception:", error);
+  });
+}
+
+export default app;

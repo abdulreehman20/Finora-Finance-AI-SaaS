@@ -1,3 +1,5 @@
+## Prompt 01
+
 Hey — act as a senior full-stack developer and do the following tasks:
 
 Step 01 --> Create a Transaction Server Action
@@ -61,3 +63,87 @@ Use the chain-of-thought approach: first plan, then implement step-by-step so ev
 After implementing, test all features and ensure everything works exactly according to my requirements and image preferences.
 
 Make sure all implemented features are fully tested and functional for a developer to review.
+
+
+---
+
+## Prompt 02
+**Act as a senior Frontend Developer.**
+
+Update the Next.js frontend app according to the exact requirements below. Use the existing backend, Better Auth, and shadcn UI. Do **not** add unrelated features.
+
+---
+
+## Authentication / Sign-in
+
+1. On the **login page**: check session using the Better Auth client/session helper.
+
+   * If the user is already authenticated → **redirect to Dashboard**.
+   * If not authenticated → stay on the login page.
+
+---
+
+## UI & Data Tables
+
+1. **Dropdown styling** in data tables:
+
+   * Change dropdown text color from white → **black**.
+   * Change dropdown hover background color from blue → **green** (match site theme).
+2. **Pagination:** replace current pagination with the shadcn Radix pagination component (`https://ui.shadcn.com/docs/components/radix/pagination`) across all data tables (transactions & reports).
+
+   * Ensure pagination logic works with the backend (correct page fetch when data grows).
+   * Align pagination visually with table layout.
+3. Ensure **reports page** pagination is updated and working.
+
+---
+
+## Transactions / Reports / Settings Updates
+
+* Implement previous Transactions / Reports / Settings feature updates (sheets, bulk import flow, toasts, etc.) as previously specified and ensure they work with updated pagination & styling.
+* **Settings page:** Remove the **Appearance** tab (leave Settings & Billing).
+
+---
+
+## Componentization & Code Cleanup (strict)
+
+For **all route `page.tsx` files** across the app:
+
+* Convert **all helper functions** in each `page.tsx` into a `lib/helper.ts` file.
+* Move **all constants** from each `page.tsx` into a separate `constants` file.
+* Convert **all UI code** into separate components. Then **import** and **render** those components inside `page.tsx`.
+
+  * I want `page.tsx` files to contain **only imports and component rendering** — no UI logic or markup inside them.
+  * Use consistent lowercase filenames (e.g., `footer.tsx`, `cta-section.tsx`).
+
+Example (for each route):
+
+* `page.tsx` → only: `import X from './components/x'; export default function Page(){ return <X/> }`
+* `lib/helper.ts` → moved helper functions
+* `constants.ts` → moved constants
+* `components/` → UI components
+
+---
+
+## AI Chat Page UI Update
+
+* Remove the top heading area that contains the logo (left) and delete chat button (right). Do **not** show that top bar.
+* Make the chat UI width match the dashboard content width (same container width as the rest of the dashboard).
+* Layout: **left sidebar** (recent chats list) + **right** chat panel (messages).
+* Ensure responsive behavior and match dashboard spacing / theme.
+
+---
+
+## Testing, Lint & Format (final QA)
+
+* Run the project **linting & formatting** tools and fix issues (use existing Biome/ESLint/Prettier or project tooling).
+* Manually test all updated components and pages to ensure they work as specified (auth redirect, pagination, sheets, bulk import flow, toasts, charts, Recent Transactions table, AI chat layout, etc.).
+* Do **not** create production builds. Only run lint/format and test components locally.
+
+---
+
+## Rules & Deliverables
+
+* Follow existing backend contracts and Better Auth session helpers (do not change backend).
+* Use shadcn UI where requested.
+* Keep changes modular, typed (TSX), and consistent with project conventions.
+* Deliver updated files, and a short README listing changed files and how to run lint/format and manual tests.

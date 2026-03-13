@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  IconAlertCircle,
-  IconLoader2,
-  IconScan,
-} from "@tabler/icons-react";
+import { IconAlertCircle, IconLoader2, IconScan } from "@tabler/icons-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -72,10 +68,17 @@ export function AddTransactionSheet({
       if (result?.data) {
         const d = result.data;
         if (d.title) set("title", d.title);
-        if (d.amount) set("amount", typeof d.amount === "number" ? d.amount / 100 : parseFloat(d.amount) || 0);
+        if (d.amount)
+          set(
+            "amount",
+            typeof d.amount === "number"
+              ? d.amount / 100
+              : parseFloat(d.amount) || 0,
+          );
         if (d.category) set("category", d.category);
         if (d.date) set("date", new Date(d.date).toISOString().slice(0, 10));
-        if (d.type) set("type", d.type.toUpperCase() === "INCOME" ? "INCOME" : "EXPENSE");
+        if (d.type)
+          set("type", d.type.toUpperCase() === "INCOME" ? "INCOME" : "EXPENSE");
         if (d.paymentMethod) set("paymentMethod", d.paymentMethod);
         toast.success("Receipt scanned successfully!");
       }
@@ -117,7 +120,8 @@ export function AddTransactionSheet({
       onSaved();
       onOpenChange(false);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to save transaction";
+      const msg =
+        err instanceof Error ? err.message : "Failed to save transaction";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -163,7 +167,10 @@ export function AddTransactionSheet({
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 text-zinc-400">
                   {scanning ? (
-                    <IconLoader2 size={18} className="animate-spin text-green-500" />
+                    <IconLoader2
+                      size={18}
+                      className="animate-spin text-green-500"
+                    />
                   ) : (
                     <IconScan size={18} />
                   )}
@@ -179,7 +186,9 @@ export function AddTransactionSheet({
                   >
                     Choose File
                   </button>
-                  <span className="ml-2 text-sm text-zinc-500">No file chosen</span>
+                  <span className="ml-2 text-sm text-zinc-500">
+                    No file chosen
+                  </span>
                 </div>
                 <input
                   ref={receiptRef}

@@ -24,7 +24,6 @@ import {
   deleteTransactionAction,
   duplicateTransactionAction,
 } from "@/actions/transactions/actions";
-import { formatCurrency, formatDate, formatPaymentMethod } from "@/lib/helper";
 import {
   Pagination,
   PaginationContent,
@@ -34,6 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { formatCurrency, formatDate, formatPaymentMethod } from "@/lib/helper";
 import type { Transaction } from "@/types/transaction";
 
 // ── Confirm Delete Modal ───────────────────────────────────────────────────────
@@ -231,7 +231,9 @@ export function TransactionsDataTable({
       toast.success("Transaction deleted successfully!");
       onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete transaction");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete transaction",
+      );
     } finally {
       setDeleteLoading(false);
       setDeleteTarget(null);
@@ -248,7 +250,9 @@ export function TransactionsDataTable({
       setSelected(new Set());
       onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete transactions");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete transactions",
+      );
     } finally {
       setDeleteLoading(false);
       setBulkDeleteConfirm(false);
@@ -261,7 +265,9 @@ export function TransactionsDataTable({
       toast.success("Transaction duplicated successfully!");
       onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to duplicate transaction");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to duplicate transaction",
+      );
     }
     setOpenMenuId(null);
   }
@@ -677,7 +683,9 @@ export function TransactionsDataTable({
               )}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => pageNumber < totalPages && onPageChange(pageNumber + 1)}
+                  onClick={() =>
+                    pageNumber < totalPages && onPageChange(pageNumber + 1)
+                  }
                   className={`cursor-pointer ${pageNumber >= totalPages ? "pointer-events-none opacity-40" : ""}`}
                 />
               </PaginationItem>

@@ -118,9 +118,7 @@ export function RecentTransactions() {
                   <td className="px-4 py-3.5 text-right">
                     <span
                       className={`font-semibold ${
-                        tx.type === "INCOME"
-                          ? "text-green-400"
-                          : "text-red-400"
+                        tx.type === "INCOME" ? "text-green-400" : "text-red-400"
                       }`}
                     >
                       {tx.type === "INCOME" ? "+" : "-"}
