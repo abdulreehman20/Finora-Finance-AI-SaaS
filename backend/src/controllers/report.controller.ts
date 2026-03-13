@@ -4,6 +4,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.middlerware";
 import {
 	generateReportService,
 	getAllReportsService,
+	resendReportService,
 	updateReportSettingService,
 } from "../services/report.service";
 import { updateReportSettingSchema } from "../validators/report.validator";
@@ -67,5 +68,23 @@ export const updateReportSettingController = asyncHandler(
 		return res
 			.status(HTTPSTATUS.OK)
 			.json({ message: "Reports setting updated successfully" });
+	},
+);
+
+// Resend Report Controller
+export const resendReportController = asyncHandler(
+	async (req: Request, res: Response) => {
+		const userId = req.user?.id;
+		if (!userId)
+			return res
+				.status(HTTPSTATUS.UNAUTHORIZED)
+				.json({ message: "User not authenticated" });
+
+		const reportId = req.params.reportId as string;
+		const result = await resendReportService(userId, reportId);
+
+		return res
+			.status(HTTPSTATUS.OK)
+			.json({ message: "Report resent successfully", ...result });
 	},
 );

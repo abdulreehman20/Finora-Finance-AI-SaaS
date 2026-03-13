@@ -54,7 +54,8 @@
   --color-brand-dark: var(--brand-dark);
 
   /* Cell ripple animation */
-  --animate-cell-ripple: cell-ripple var(--duration, 200ms) ease-out none 1 var(--delay, 0ms);
+  --animate-cell-ripple: cell-ripple var(--duration, 200ms) ease-out none 1
+    var(--delay, 0ms);
 
   @keyframes cell-ripple {
     0% {
@@ -176,14 +177,20 @@
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, oklch(0.65 0.22 145), oklch(0.78 0.18 160));
+  background: linear-gradient(
+    135deg,
+    oklch(0.65 0.22 145),
+    oklch(0.78 0.18 160)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .glow-green {
-  box-shadow: 0 0 40px oklch(0.58 0.2 145 / 0.3), 0 0 80px oklch(0.58 0.2 145 / 0.1);
+  box-shadow:
+    0 0 40px oklch(0.58 0.2 145 / 0.3),
+    0 0 80px oklch(0.58 0.2 145 / 0.1);
 }
 
 .glass-card {

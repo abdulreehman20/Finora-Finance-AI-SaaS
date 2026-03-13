@@ -1,3 +1,5 @@
+import Stripe from "stripe"
+import { stripe } from "@better-auth/stripe"
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { openAPI, username } from "better-auth/plugins";
@@ -18,11 +20,15 @@ const schema = {
   verification,
 };
 
+
+// // ── Stripe Client ───────────────────────────────────────────────────────────
+// const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+//   apiVersion: "2026-02-25.clover", // Updated to match the expected Stripe API version
+// })
+
+// ── Resend Client ───────────────────────────────────────────────────────────
 const resend = new Resend(process.env.RESEND_API_KEY);
 const appName = process.env.BETTER_AUTH_APP_NAME ?? "Finora AI";
-
-const frontendURL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:7000";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
@@ -30,8 +36,8 @@ export const auth = betterAuth({
   // Base URL of this Express server; used for callbacks & redirects
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:7000",
   trustedOrigins: [
-    process.env.NEXT_PUBLIC_APP_URL!,
-    process.env.NEXT_PUBLIC_BACKEND_URL!,
+    process.env.NEXT_PUBLIC_APP_URL! ?? "http://localhost:3000",
+    process.env.NEXT_PUBLIC_BACKEND_URL! ?? "http://localhost:7000",
   ],
 
   database: drizzleAdapter(db, { provider: "pg", schema }),
@@ -113,7 +119,16 @@ export const auth = betterAuth({
    */
 
   // Use appName as issuer in authenticator apps
-  plugins: [username(), openAPI()],
+  plugins: [
+    username(),
+    openAPI(),
+    // stripe({
+    //   stripeClient,
+    //   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+    //   createCustomerOnSignUp: true,
+    // })
+
+  ],
 
   /* Email verification for sign-up and sign-in flows. */
   emailVerification: {

@@ -277,3 +277,40 @@ export const updateReportSettingService = async (
 			.where(eq(reportSetting.userId, userId));
 	}
 };
+
+// -- Resend Report -----------------------------------------------------------------
+
+export const resendReportService = async (
+	userId: string,
+	reportId: string,
+) => {
+	const { APIError } = await import('../lib/apiError');
+	const { HTTPSTATUS } = await import('../configs/http.config');
+
+	const [existingReport] = await db
+		.select()
+		.from(report)
+		.where(and(eq(report.id, reportId), eq(report.userId, userId)))
+		.limit(1);
+
+	if (!existingReport) {
+		throw new APIError(HTTPSTATUS.NOT_FOUND, 'Report not found');
+	}
+
+	const sentAt = new Date(existingReport.sentDate);
+	const fromDate = new Date(sentAt.getFullYear(), sentAt.getMonth(), 1);
+	const toDate = new Date(sentAt.getFullYear(), sentAt.getMonth() + 1, 0, 23, 59, 59);
+
+	const reportPayload = await generateReportService(userId, fromDate, toDate);
+
+	if (!reportPayload) {
+		return { resent: false, message: 'No transaction data for this period' };
+	}
+
+	await db
+		.update(report)
+		.set({ status: ReportStatusEnum.SENT, sentDate: new Date() })
+		.where(eq(report.id, reportId));
+
+	return { resent: true };
+};

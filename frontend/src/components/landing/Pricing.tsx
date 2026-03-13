@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { motion } from "motion/react";
 import { Check, Zap } from "lucide-react";
+import { motion } from "motion/react";
+import Link from "next/link";
+import React, { useState } from "react";
 
 const plans = {
   monthly: {

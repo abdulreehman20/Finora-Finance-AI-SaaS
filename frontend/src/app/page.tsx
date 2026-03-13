@@ -1,12 +1,12 @@
-import { LandingNavbar } from "@/components/landing/Navbar";
-import { HeroSection } from "@/components/landing/Hero";
-import { PurposeSection } from "@/components/landing/PurposeGrid";
-import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
-import { ReviewsSection } from "@/components/landing/Reviews";
-import { PricingSection } from "@/components/landing/Pricing";
 import { CTASection } from "@/components/landing/CTASection";
+import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import { Footer } from "@/components/landing/Footer";
 import { GridDotBackground } from "@/components/landing/GridBackground";
+import { HeroSection } from "@/components/landing/Hero";
+import { LandingNavbar } from "@/components/landing/Navbar";
+import { PricingSection } from "@/components/landing/Pricing";
+import { PurposeSection } from "@/components/landing/PurposeGrid";
+import { ReviewsSection } from "@/components/landing/Reviews";
 
 export default function Home() {
   return (
