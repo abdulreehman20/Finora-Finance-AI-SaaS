@@ -1,20 +1,27 @@
 {
-	"version": "7",
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "7",
-			"when": 1772034002464,
-			"tag": "0000_perfect_the_captain",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1772706111608,
-			"tag": "0001_add_day_of_month_to_report_setting",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1772034002464,
+      "tag": "0000_perfect_the_captain",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772706111608,
+      "tag": "0001_add_day_of_month_to_report_setting",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773420114479,
+      "tag": "0002_polite_vertigo",
+      "breakpoints": true
+    }
+  ]
 }

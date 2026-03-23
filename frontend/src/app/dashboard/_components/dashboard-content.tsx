@@ -24,6 +24,7 @@ export function DashboardContent() {
   const [preset, setPreset] = useState<AnalyticsPreset>("ALL");
   const [showAddTx, setShowAddTx] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [txRefreshKey, setTxRefreshKey] = useState(0);
 
   // Data state
   const [summary, setSummary] = useState<Awaited<
@@ -73,11 +74,17 @@ export function DashboardContent() {
 
   const userName =
     session?.user?.name ??
-    (session?.user as Record<string, string>)?.username ??
+    (session?.user as unknown as Record<string, string>)?.username ??
     "there";
 
   const presetLabel =
     DASHBOARD_PRESETS.find((p) => p.value === preset)?.label ?? "All Time";
+
+  function handleTransactionSaved() {
+    fetchAll(preset);
+    // bump key so RecentTransactions re-fetches
+    setTxRefreshKey((k) => k + 1);
+  }
 
   return (
     <main className="min-h-screen bg-[oklch(0.06_0.01_145)] px-6 py-8">
@@ -158,16 +165,17 @@ export function DashboardContent() {
           presetLabel={presetLabel}
         />
 
-        {/* Recent Transactions */}
-        <RecentTransactions />
+        {/* Recent Transactions — refreshes when txRefreshKey changes */}
+        <RecentTransactions refreshKey={txRefreshKey} />
       </div>
 
       {/* Add Transaction Sheet */}
       <AddTransactionSheet
         open={showAddTx}
         onOpenChange={setShowAddTx}
-        onSaved={() => fetchAll(preset)}
+        onSaved={handleTransactionSaved}
       />
     </main>
   );
 }
+

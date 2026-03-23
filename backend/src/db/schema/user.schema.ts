@@ -20,6 +20,8 @@ export const user = pgTable("user", {
 	username: text("username").unique(),
 	displayUsername: text("display_username"),
 	twoFactorEnabled: boolean("two_factor_enabled").default(false),
+	/** Subscription plan: "free" (default) or "pro" (active Polar subscription) */
+	plan: text("plan").default("free").notNull(),
 });
 
 export const userRelations = relations(user, ({ many }) => ({

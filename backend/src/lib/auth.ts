@@ -1,8 +1,8 @@
-import Stripe from "stripe"
-import { stripe } from "@better-auth/stripe"
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { openAPI, username } from "better-auth/plugins";
+import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
 import { Resend } from "resend";
 import { db } from "../db";
 import { account, session, user, verification } from "../db/schema/index";
@@ -12,6 +12,18 @@ import {
   resetPasswordEmailTemplate,
   verifyEmailTemplate,
 } from "../mailers/templates/reset.password";
+import { eq } from "drizzle-orm";
+
+// ── Resend Client ────────────────────────────────────────────────────────────
+const resend = new Resend(process.env.RESEND_API_KEY);
+const appName = process.env.BETTER_AUTH_APP_NAME ?? "Finora AI";
+
+// ── Polar Client ─────────────────────────────────────────────────────────────
+// server: "sandbox" for testing, "production" for live
+const polarClient = new Polar({
+  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  server: (process.env.POLAR_SERVER as "sandbox" | "production") ?? "sandbox",
+});
 
 const schema = {
   user,
@@ -20,20 +32,9 @@ const schema = {
   verification,
 };
 
-
-// // ── Stripe Client ───────────────────────────────────────────────────────────
-// const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-//   apiVersion: "2026-02-25.clover", // Updated to match the expected Stripe API version
-// })
-
-// ── Resend Client ───────────────────────────────────────────────────────────
-const resend = new Resend(process.env.RESEND_API_KEY);
-const appName = process.env.BETTER_AUTH_APP_NAME ?? "Finora AI";
-
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
   appName,
-  // Base URL of this Express server; used for callbacks & redirects
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:7000",
   trustedOrigins: [
     process.env.NEXT_PUBLIC_APP_URL! ?? "http://localhost:3000",
@@ -41,13 +42,6 @@ export const auth = betterAuth({
   ],
 
   database: drizzleAdapter(db, { provider: "pg", schema }),
-
-  /**
-   * Email + password authentication with:
-   * - required email verification for sign-in
-   * - reset password emails
-   * - change / update password endpoint
-   */
 
   emailAndPassword: {
     enabled: true,
@@ -61,8 +55,6 @@ export const auth = betterAuth({
       });
     },
     onPasswordReset: async ({ user }, _request) => {
-      console.log(`Password for user ${user.email} has been reset.`);
-
       await resend.emails.send({
         from: process.env.MAILER_SENDER!,
         to: user.email,
@@ -72,17 +64,10 @@ export const auth = betterAuth({
     },
   },
 
-  /**
-   * User management:
-   * - change email with verification
-   * - hard delete user with optional email confirmation
-   */
   user: {
-    // Allow updating unverified emails without verification only when current email is not verified
     changeEmail: { enabled: true, updateEmailWithoutVerification: false },
     deleteUser: {
       enabled: true,
-      // Optional verification email before deletion; follows Better Auth docs
       sendDeleteAccountVerification: async ({ user, url }, _request) => {
         await resend.emails.send({
           from: process.env.MAILER_SENDER!,
@@ -94,16 +79,8 @@ export const auth = betterAuth({
     },
   },
 
-  /**
-   * Built-in rate limiter: 120 requests per 60 seconds.
-   * Note: only applies to client-initiated Better Auth HTTP endpoints.
-   */
   rateLimit: { enabled: true, window: 60, max: 120 },
 
-  /**
-   * Social sign-on providers. Client IDs and secrets are required
-   * and should be configured via environment variables.
-   */
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -111,26 +88,116 @@ export const auth = betterAuth({
     },
   },
 
-  /**
-   * Core + plugins:
-   * - username: username support on top of email/password
-   * - twoFactor: TOTP/OTP two factor authentication
-   * - openAPI: interactive OpenAPI reference at /api/auth/reference
-   */
-
-  // Use appName as issuer in authenticator apps
   plugins: [
     username(),
     openAPI(),
-    // stripe({
-    //   stripeClient,
-    //   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-    //   createCustomerOnSignUp: true,
-    // })
 
+    // ── Polar Plugin (official @polar-sh/better-auth) ───────────────────────
+    polar({
+      client: polarClient,
+
+      // Automatically create a Polar customer when a new user signs up
+      createCustomerOnSignUp: true,
+
+      use: [
+        // ── Checkout Plugin ──────────────────────────────────────────────────
+        checkout({
+          products: [
+            {
+              productId: process.env.POLAR_PRODUCT_ID!,
+              slug: "pro", // /api/auth/checkout/pro
+            },
+          ],
+          // Frontend success page — {CHECKOUT_ID} is replaced by Polar
+          successUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/dashboard/settings?tab=billing&checkout_id={CHECKOUT_ID}`,
+          authenticatedUsersOnly: true,
+        }),
+
+        // ── Portal Plugin ────────────────────────────────────────────────────
+        // Exposes authClient.customer.state(), .portal(), .subscriptions.list()
+        portal(),
+
+        // ── Webhooks Plugin ──────────────────────────────────────────────────
+        webhooks({
+          secret: process.env.POLAR_WEBHOOK_SECRET!,
+
+          // Fires when a subscription becomes active (new purchase or renewal)
+          onSubscriptionActive: async (payload) => {
+            const customerId = payload.data?.customerId;
+            if (!customerId) return;
+
+            // Look up user by their Polar customerId stored as externalAccountId
+            // Better Auth stores the Polar customer ID in the account table
+            try {
+              const accounts = await db
+                .select()
+                .from(account)
+                .where(eq(account.accountId, customerId));
+
+              const userId = accounts[0]?.userId;
+              if (userId) {
+                await db
+                  .update(user)
+                  .set({ plan: "pro" } as any)
+                  .where(eq(user.id, userId));
+                console.log(`[Polar] User ${userId} upgraded to pro`);
+              }
+            } catch (err) {
+              console.error("[Polar] onSubscriptionActive error:", err);
+            }
+          },
+
+          // Fires when a subscription is canceled or revoked
+          onSubscriptionCanceled: async (payload) => {
+            const customerId = payload.data?.customerId;
+            if (!customerId) return;
+
+            try {
+              const accounts = await db
+                .select()
+                .from(account)
+                .where(eq(account.accountId, customerId));
+
+              const userId = accounts[0]?.userId;
+              if (userId) {
+                await db
+                  .update(user)
+                  .set({ plan: "free" } as any)
+                  .where(eq(user.id, userId));
+                console.log(`[Polar] User ${userId} downgraded to free`);
+              }
+            } catch (err) {
+              console.error("[Polar] onSubscriptionCanceled error:", err);
+            }
+          },
+
+          onSubscriptionRevoked: async (payload) => {
+            const customerId = payload.data?.customerId;
+            if (!customerId) return;
+
+            try {
+              const accounts = await db
+                .select()
+                .from(account)
+                .where(eq(account.accountId, customerId));
+
+              const userId = accounts[0]?.userId;
+              if (userId) {
+                await db
+                  .update(user)
+                  .set({ plan: "free" } as any)
+                  .where(eq(user.id, userId));
+                console.log(`[Polar] User ${userId} revoked to free`);
+              }
+            } catch (err) {
+              console.error("[Polar] onSubscriptionRevoked error:", err);
+            }
+          },
+        }),
+      ],
+    }),
   ],
 
-  /* Email verification for sign-up and sign-in flows. */
   emailVerification: {
     sendVerificationEmail: async ({ user, url }, _request) => {
       await resend.emails.send({

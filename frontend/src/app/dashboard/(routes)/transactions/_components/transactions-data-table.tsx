@@ -33,7 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { formatCurrency, formatDate, formatPaymentMethod } from "@/lib/helper";
+import { buildPageButtons, formatCurrency, formatDate, formatPaymentMethod } from "@/lib/helper";
 import type { Transaction } from "@/types/transaction";
 
 // ── Confirm Delete Modal ───────────────────────────────────────────────────────
@@ -273,32 +273,6 @@ export function TransactionsDataTable({
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
-
-  function buildPageButtons(): (number | "…")[] {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages: (number | "…")[] = [];
-    const around = new Set([
-      1,
-      totalPages,
-      pageNumber,
-      pageNumber - 1,
-      pageNumber + 1,
-    ]);
-    const sorted = Array.from(around)
-      .filter((p) => p >= 1 && p <= totalPages)
-      .sort((a, b) => a - b);
-    let prev = 0;
-    for (const p of sorted) {
-      if (prev && p - prev > 1) pages.push("…");
-      pages.push(p);
-      prev = p;
-    }
-    return pages;
-  }
-
-  const pageButtons = buildPageButtons();
 
   return (
     <>
@@ -650,48 +624,58 @@ export function TransactionsDataTable({
         </div>
 
         {/* ── Pagination ── */}
-        <div className="flex items-center justify-between border-t border-white/10 px-5 py-4">
-          <p className="text-xs text-zinc-500">
-            {total === 0
-              ? "No transactions"
-              : `Showing ${Math.min((pageNumber - 1) * pageSize + 1, total)}–${Math.min(pageNumber * pageSize, total)} of ${total} transactions`}
-          </p>
-          <Pagination className="w-auto mx-0 justify-end">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => pageNumber > 1 && onPageChange(pageNumber - 1)}
-                  className={`cursor-pointer ${pageNumber <= 1 ? "pointer-events-none opacity-40" : ""}`}
-                />
-              </PaginationItem>
-              {pageButtons.map((p, idx) =>
-                p === "…" ? (
-                  <PaginationItem key={`ellipsis-${idx}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      isActive={p === pageNumber}
-                      onClick={() => onPageChange(p as number)}
-                      className="cursor-pointer"
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
-              )}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    pageNumber < totalPages && onPageChange(pageNumber + 1)
-                  }
-                  className={`cursor-pointer ${pageNumber >= totalPages ? "pointer-events-none opacity-40" : ""}`}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-white/10 px-5 py-4">
+            <span className="text-xs text-zinc-500">
+              Showing{" "}
+              <span className="text-zinc-300 font-medium">
+                {Math.min((pageNumber - 1) * pageSize + 1, total)}–
+                {Math.min(pageNumber * pageSize, total)}
+              </span>{" "}
+              of <span className="text-zinc-300 font-medium">{total}</span> transactions
+            </span>
+
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => pageNumber > 1 && onPageChange(pageNumber - 1)}
+                    className={`text-zinc-400 hover:text-white hover:bg-white/10 border-white/10 cursor-pointer ${pageNumber <= 1 ? "opacity-40 pointer-events-none" : ""}`}
+                  />
+                </PaginationItem>
+
+                {buildPageButtons(pageNumber, totalPages).map((btn, idx) =>
+                  btn === "…" ? (
+                    <PaginationItem key={`ellipsis-${idx}`}>
+                      <PaginationEllipsis className="text-zinc-500" />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={btn}>
+                      <PaginationLink
+                        onClick={() => onPageChange(btn)}
+                        isActive={btn === pageNumber}
+                        className={`cursor-pointer border-white/10 ${
+                          btn === pageNumber
+                            ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
+                            : "text-zinc-400 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {btn}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => pageNumber < totalPages && onPageChange(pageNumber + 1)}
+                    className={`text-zinc-400 hover:text-white hover:bg-white/10 border-white/10 cursor-pointer ${pageNumber >= totalPages ? "opacity-40 pointer-events-none" : ""}`}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       {/* Overlay to close menu on outside click */}

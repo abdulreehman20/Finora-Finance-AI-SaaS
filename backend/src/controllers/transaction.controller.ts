@@ -3,6 +3,11 @@ import { HTTPSTATUS } from "../configs/http.config";
 import type { TransactionTypeEnum } from "../db/schema/transaction.schema";
 import { asyncHandler } from "../middlewares/asyncHandler.middlerware";
 import {
+	FREE_PLAN_LIMITS,
+	getUserTransactionCountService,
+	isUserSubscribedService,
+} from "../services/subscription.service";
+import {
 	bulkDeleteTransactionService,
 	bulkTransactionService,
 	createTransactionService,
@@ -87,6 +92,18 @@ export const createTransactionController = asyncHandler(
 				.status(HTTPSTATUS.UNAUTHORIZED)
 				.json({ message: "User not authenticated" });
 
+		// ── Plan restriction: free users capped at 30 transactions ──
+		const isSubscribed = await isUserSubscribedService(userId);
+		if (!isSubscribed) {
+			const txCount = await getUserTransactionCountService(userId);
+			if (txCount >= FREE_PLAN_LIMITS.MAX_TRANSACTIONS) {
+				return res.status(HTTPSTATUS.FORBIDDEN).json({
+					message: `Free plan allows a maximum of ${FREE_PLAN_LIMITS.MAX_TRANSACTIONS} transactions. Please upgrade to Pro for unlimited transactions.`,
+					code: "TRANSACTION_LIMIT_REACHED",
+				});
+			}
+		}
+
 		const transaction = await createTransactionService(body, userId);
 
 		return res
@@ -94,6 +111,7 @@ export const createTransactionController = asyncHandler(
 			.json({ message: "Transacton created successfully", transaction });
 	},
 );
+
 
 // Update Transaction Controller
 export const updateTransactionController = asyncHandler(
@@ -178,6 +196,16 @@ export const bulkTransactionController = asyncHandler(
 			return res
 				.status(HTTPSTATUS.UNAUTHORIZED)
 				.json({ message: "User not authenticated" });
+
+		// ── Plan restriction: bulk import is Pro-only ──
+		const isSubscribed = await isUserSubscribedService(userId);
+		if (!isSubscribed) {
+			return res.status(HTTPSTATUS.FORBIDDEN).json({
+				message: "Bulk import is only available on the Pro plan. Please upgrade to access this feature.",
+				code: "BULK_IMPORT_RESTRICTED",
+			});
+		}
+
 		const { transactions } = bulkTransactionSchema.parse(req.body);
 
 		const result = await bulkTransactionService(userId, transactions);

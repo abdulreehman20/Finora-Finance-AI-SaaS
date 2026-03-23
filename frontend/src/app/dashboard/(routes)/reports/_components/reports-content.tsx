@@ -179,48 +179,66 @@ export function ReportsContent() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
-            <p className="text-xs text-zinc-500">
-              Showing {start}–{end} of {displayedTotal}
-            </p>
-            <Pagination className="w-auto mx-0 justify-end">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() =>
-                      pageNumber > 1 && setPageNumber((p) => p - 1)
-                    }
-                    className={`cursor-pointer ${pageNumber <= 1 ? "pointer-events-none opacity-40" : ""}`}
-                  />
-                </PaginationItem>
-                {pageButtons.map((p, idx) =>
-                  p === "…" ? (
-                    <PaginationItem key={`ellipsis-${idx}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  ) : (
-                    <PaginationItem key={p}>
-                      <PaginationLink
-                        isActive={p === pageNumber}
-                        onClick={() => setPageNumber(p as number)}
-                        className="cursor-pointer"
-                      >
-                        {p}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ),
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      pageNumber < totalPages && setPageNumber((p) => p + 1)
-                    }
-                    className={`cursor-pointer ${pageNumber >= totalPages ? "pointer-events-none opacity-40" : ""}`}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+              <span className="text-xs text-zinc-500">
+                Showing{" "}
+                <span className="text-zinc-300 font-medium">
+                  {start}–{end}
+                </span>{" "}
+                of{" "}
+                <span className="text-zinc-300 font-medium">
+                  {displayedTotal}
+                </span>{" "}
+                reports
+              </span>
+
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        pageNumber > 1 && setPageNumber((p) => p - 1)
+                      }
+                      className={`text-zinc-400 hover:text-white hover:bg-white/10 border-white/10 cursor-pointer ${pageNumber <= 1 ? "opacity-40 pointer-events-none" : ""}`}
+                    />
+                  </PaginationItem>
+
+                  {pageButtons.map((btn, idx) =>
+                    btn === "…" ? (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis className="text-zinc-500" />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={btn}>
+                        <PaginationLink
+                          onClick={() => setPageNumber(btn as number)}
+                          isActive={btn === pageNumber}
+                          className={`cursor-pointer border-white/10 ${
+                            btn === pageNumber
+                              ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
+                              : "text-zinc-400 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          {btn}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        pageNumber < totalPages &&
+                        setPageNumber((p) => p + 1)
+                      }
+                      className={`text-zinc-400 hover:text-white hover:bg-white/10 border-white/10 cursor-pointer ${pageNumber >= totalPages ? "opacity-40 pointer-events-none" : ""}`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </div>
 

@@ -10,7 +10,12 @@ import { getAllTransactionsAction } from "@/actions/transactions/actions";
 import { formatCurrency, formatDate, formatPaymentMethod } from "@/lib/helper";
 import type { Transaction } from "@/types/transaction";
 
-export function RecentTransactions() {
+interface RecentTransactionsProps {
+  /** Pass a monotonically increasing version number to trigger a refresh */
+  refreshKey?: number;
+}
+
+export function RecentTransactions({ refreshKey = 0 }: RecentTransactionsProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,9 +34,10 @@ export function RecentTransactions() {
     }
   }, []);
 
+  // Re-fetch whenever refreshKey changes (e.g. after adding a transaction)
   useEffect(() => {
     fetchRecent();
-  }, [fetchRecent]);
+  }, [fetchRecent, refreshKey]);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[oklch(0.10_0.01_145)] overflow-hidden">
