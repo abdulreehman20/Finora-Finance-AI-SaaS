@@ -26,8 +26,6 @@
 		"@better-auth/stripe": "^1.5.5",
 		"@google/genai": "^1.42.0",
 		"@neondatabase/serverless": "^1.0.2",
-		"@polar-sh/better-auth": "^1.8.3",
-		"@polar-sh/sdk": "^0.46.6",
 		"@scalar/express-api-reference": "^0.9.0",
 		"@types/multer": "^2.0.0",
 		"@types/nodemailer": "^7.0.9",

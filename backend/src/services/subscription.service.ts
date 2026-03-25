@@ -12,7 +12,7 @@ export const FREE_PLAN_LIMITS = {
 
 /**
  * Check if a user is on the Pro plan.
- * Source of truth is the `plan` column on the user row — updated by Polar webhooks.
+ * Source of truth is the `plan` column on the user row in the database.
  */
 export async function isUserSubscribedService(userId: string): Promise<boolean> {
   const [result] = await db

@@ -20,8 +20,10 @@ export const user = pgTable("user", {
 	username: text("username").unique(),
 	displayUsername: text("display_username"),
 	twoFactorEnabled: boolean("two_factor_enabled").default(false),
-	/** Subscription plan: "free" (default) or "pro" (active Polar subscription) */
+	/** Subscription plan: "free" (default) or "pro" (active Stripe subscription) */
 	plan: text("plan").default("free").notNull(),
+	/** Stripe customer ID — populated by @better-auth/stripe on signup */
+	stripeCustomerId: text("stripe_customer_id"),
 });
 
 export const userRelations = relations(user, ({ many }) => ({

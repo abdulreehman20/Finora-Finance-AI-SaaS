@@ -25,10 +25,10 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Schema imports
-import { user } from "./db/schema/user.schema.js";
-import { transaction } from "./db/schema/transaction.schema.js";
-import { report } from "./db/schema/report.schema.js";
-import { reportSetting } from "./db/schema/report.setting.schema.js";
+import { user } from "../src/db/schema/user.schema.js";
+import { transaction } from "../src/db/schema/transaction.schema.js";
+import { report } from "../src/db/schema/report.schema.js";
+import { reportSetting } from "../src/db/schema/report.setting.schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB Connection

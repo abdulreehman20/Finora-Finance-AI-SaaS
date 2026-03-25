@@ -40,6 +40,12 @@ app.use("/api/docs", docsRouter);
 // routes
 app.use("/api", router);
 
+// Home Api for welcoming
+app.get("/", (_req, res) => {
+  logger.info("Received request at /");
+  res.json({ message: "Welcome to Finora Finance AI SaaS API!" });
+});
+
 // Api for Health Test
 app.get("/api/health", (_req, res) => {
   logger.info("Received request at /api/health");

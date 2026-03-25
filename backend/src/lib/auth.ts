@@ -1,8 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { openAPI, username } from "better-auth/plugins";
-import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
-import { Polar } from "@polar-sh/sdk";
 import { Resend } from "resend";
 import { db } from "../db";
 import { account, session, user, verification } from "../db/schema/index";
@@ -13,17 +11,15 @@ import {
   verifyEmailTemplate,
 } from "../mailers/templates/reset.password";
 import { eq } from "drizzle-orm";
+import { stripe } from "@better-auth/stripe";
+import Stripe from "stripe";
 
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-02-25.clover",
+});
 // ── Resend Client ────────────────────────────────────────────────────────────
 const resend = new Resend(process.env.RESEND_API_KEY);
 const appName = process.env.BETTER_AUTH_APP_NAME ?? "Finora AI";
-
-// ── Polar Client ─────────────────────────────────────────────────────────────
-// server: "sandbox" for testing, "production" for live
-const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: (process.env.POLAR_SERVER as "sandbox" | "production") ?? "sandbox",
-});
 
 const schema = {
   user,
@@ -91,110 +87,39 @@ export const auth = betterAuth({
   plugins: [
     username(),
     openAPI(),
-
-    // ── Polar Plugin (official @polar-sh/better-auth) ───────────────────────
-    polar({
-      client: polarClient,
-
-      // Automatically create a Polar customer when a new user signs up
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       createCustomerOnSignUp: true,
-
-      use: [
-        // ── Checkout Plugin ──────────────────────────────────────────────────
-        checkout({
-          products: [
-            {
-              productId: process.env.POLAR_PRODUCT_ID!,
-              slug: "pro", // /api/auth/checkout/pro
-            },
-          ],
-          // Frontend success page — {CHECKOUT_ID} is replaced by Polar
-          successUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/dashboard/settings?tab=billing&checkout_id={CHECKOUT_ID}`,
-          authenticatedUsersOnly: true,
-        }),
-
-        // ── Portal Plugin ────────────────────────────────────────────────────
-        // Exposes authClient.customer.state(), .portal(), .subscriptions.list()
-        portal(),
-
-        // ── Webhooks Plugin ──────────────────────────────────────────────────
-        webhooks({
-          secret: process.env.POLAR_WEBHOOK_SECRET!,
-
-          // Fires when a subscription becomes active (new purchase or renewal)
-          onSubscriptionActive: async (payload) => {
-            const customerId = payload.data?.customerId;
-            if (!customerId) return;
-
-            // Look up user by their Polar customerId stored as externalAccountId
-            // Better Auth stores the Polar customer ID in the account table
-            try {
-              const accounts = await db
-                .select()
-                .from(account)
-                .where(eq(account.accountId, customerId));
-
-              const userId = accounts[0]?.userId;
-              if (userId) {
-                await db
-                  .update(user)
-                  .set({ plan: "pro" } as any)
-                  .where(eq(user.id, userId));
-                console.log(`[Polar] User ${userId} upgraded to pro`);
-              }
-            } catch (err) {
-              console.error("[Polar] onSubscriptionActive error:", err);
-            }
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: "free",
+            priceId: "free", // Placeholder since free plan doesn't usually have a stripe price in a typical implementation, or we just leave it out
           },
-
-          // Fires when a subscription is canceled or revoked
-          onSubscriptionCanceled: async (payload) => {
-            const customerId = payload.data?.customerId;
-            if (!customerId) return;
-
-            try {
-              const accounts = await db
-                .select()
-                .from(account)
-                .where(eq(account.accountId, customerId));
-
-              const userId = accounts[0]?.userId;
-              if (userId) {
-                await db
-                  .update(user)
-                  .set({ plan: "free" } as any)
-                  .where(eq(user.id, userId));
-                console.log(`[Polar] User ${userId} downgraded to free`);
-              }
-            } catch (err) {
-              console.error("[Polar] onSubscriptionCanceled error:", err);
-            }
+          {
+            name: "pro",
+            priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
           },
-
-          onSubscriptionRevoked: async (payload) => {
-            const customerId = payload.data?.customerId;
-            if (!customerId) return;
-
-            try {
-              const accounts = await db
-                .select()
-                .from(account)
-                .where(eq(account.accountId, customerId));
-
-              const userId = accounts[0]?.userId;
-              if (userId) {
-                await db
-                  .update(user)
-                  .set({ plan: "free" } as any)
-                  .where(eq(user.id, userId));
-                console.log(`[Polar] User ${userId} revoked to free`);
-              }
-            } catch (err) {
-              console.error("[Polar] onSubscriptionRevoked error:", err);
-            }
-          },
-        }),
-      ],
+        ],
+        onSubscriptionUpdate: async ({ event, subscription }) => {
+          // When a user upgrades or cancels, update their plan in the `user` table
+          const isPro = subscription.status === "active" || subscription.status === "trialing";
+          
+          await db
+            .update(user)
+            .set({ plan: isPro ? "pro" : "free" })
+            .where(eq(user.id, subscription.referenceId));
+        },
+        onSubscriptionDeleted: async ({ event, subscription }) => {
+          // On deletion, revert to free
+          await db
+            .update(user)
+            .set({ plan: "free" })
+            .where(eq(user.id, subscription.referenceId));
+        },
+      },
     }),
   ],
 

@@ -6,8 +6,7 @@ import { getSubscriptionStatusService } from "../services/subscription.service";
 /**
  * GET /api/subscription/status
  * Returns the authenticated user's plan info and feature limits.
- * The plan field is updated automatically by the official Polar webhook
- * handled at POST /api/auth/polar/webhooks (via @polar-sh/better-auth).
+ * The plan field is stored in the `plan` column on the user row in the database.
  */
 export const getSubscriptionStatusController = asyncHandler(
   async (req: Request, res: Response) => {
