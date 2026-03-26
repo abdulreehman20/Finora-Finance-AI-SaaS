@@ -80,7 +80,7 @@ export function RecentTransactions({ refreshKey = 0 }: RecentTransactionsProps) 
                   colSpan={5}
                   className="py-12 text-center text-sm text-zinc-500"
                 >
-                  No transactions yet.
+                  No transaction available
                 </td>
               </tr>
             ) : (

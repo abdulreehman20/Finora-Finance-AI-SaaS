@@ -29,6 +29,7 @@ import { user } from "../src/db/schema/user.schema.js";
 import { transaction } from "../src/db/schema/transaction.schema.js";
 import { report } from "../src/db/schema/report.schema.js";
 import { reportSetting } from "../src/db/schema/report.setting.schema.js";
+import { subscription } from "../src/db/schema/subscription.schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB Connection
@@ -704,6 +705,37 @@ async function seed() {
       await db.insert(reportSetting).values(settingRecord).onConflictDoNothing();
       console.log("   ✅ Report setting seeded!");
     }
+    // ── 5. Subscription ─────────────────────────────────────────────
+    console.log("\n💳 Seeding free-plan subscription record...");
+
+    const existingSub = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.referenceId, u.id))
+      .limit(1);
+
+    if (existingSub.length > 0) {
+      console.log("   ℹ️  Subscription already exists — skipped.");
+    } else {
+      await db.insert(subscription).values({
+        id: uuid(),
+        plan: "free",
+        referenceId: u.id,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        stripePriceId: null,
+        status: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        seats: null,
+        trialStart: null,
+        trialEnd: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).onConflictDoNothing();
+      console.log("   ✅ Subscription (free plan) seeded!");
+    }
   }
 
   console.log("\n🎉 Seed completed successfully!");
@@ -711,6 +743,7 @@ async function seed() {
   console.log(`   Transactions per user: 120`);
   console.log(`   Reports per user: 8`);
   console.log(`   Report settings per user: 1`);
+  console.log(`   Subscription records per user: 1`);
   process.exit(0);
 }
 

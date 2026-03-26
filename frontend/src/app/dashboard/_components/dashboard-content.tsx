@@ -11,6 +11,7 @@ import {
   getExpenseBreakdownAction,
   getSummaryAnalyticsAction,
 } from "@/actions/analytics/actions";
+import { getSubscriptionStatusAction } from "@/actions/subscription/actions";
 import { authClient } from "@/lib/auth-client";
 
 import { DASHBOARD_PRESETS } from "./constants";
@@ -21,10 +22,14 @@ import { AddTransactionSheet } from "../(routes)/transactions/_components/add-tr
 
 export function DashboardContent() {
   const { data: session } = authClient.useSession();
-  const [preset, setPreset] = useState<AnalyticsPreset>("ALL");
+  const [preset, setPreset] = useState<AnalyticsPreset>("1W");
   const [showAddTx, setShowAddTx] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [txRefreshKey, setTxRefreshKey] = useState(0);
+
+  // Plan gating state
+  const [isPro, setIsPro] = useState(false);
+  const [planLoading, setPlanLoading] = useState(true);
 
   // Data state
   const [summary, setSummary] = useState<Awaited<
@@ -36,13 +41,34 @@ export function DashboardContent() {
   const [chartCounts, setChartCounts] = useState({
     income: 0,
     expenses: 0,
-    label: "All Time",
+    label: "Last 7 Days",
   });
   const [breakdown, setBreakdown] = useState<
     { name: string; value: number; percentage: number }[]
   >([]);
   const [totalSpent, setTotalSpent] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Load plan status on mount
+  useEffect(() => {
+    getSubscriptionStatusAction()
+      .then((s) => setIsPro(s.isSubscribed))
+      .catch(() => setIsPro(false))
+      .finally(() => setPlanLoading(false));
+  }, []);
+
+  // Free plan only allows "1W" preset
+  const FREE_PRESETS: AnalyticsPreset[] = ["1W"];
+  const allowedPresets = isPro
+    ? DASHBOARD_PRESETS.map((p) => p.value)
+    : FREE_PRESETS;
+
+  // If current preset is not allowed (e.g., user changed to free), reset to 1W
+  useEffect(() => {
+    if (!planLoading && !isPro && preset !== "1W") {
+      setPreset("1W");
+    }
+  }, [isPro, planLoading, preset]);
 
   const fetchAll = useCallback((p: AnalyticsPreset) => {
     startTransition(async () => {
@@ -78,13 +104,24 @@ export function DashboardContent() {
     "there";
 
   const presetLabel =
-    DASHBOARD_PRESETS.find((p) => p.value === preset)?.label ?? "All Time";
+    DASHBOARD_PRESETS.find((p) => p.value === preset)?.label ?? "Last 7 Days";
 
   function handleTransactionSaved() {
     fetchAll(preset);
     // bump key so RecentTransactions re-fetches
     setTxRefreshKey((k) => k + 1);
   }
+
+  function handlePresetChange(newPreset: AnalyticsPreset) {
+    if (!isPro && newPreset !== "1W") {
+      // Don't block — let ChartsRow show the upgrade message
+      // We still change the preset to show the locked state
+    }
+    setPreset(newPreset);
+  }
+
+  // If free user selected a non-1W preset, we show the gate on the chart
+  const isGated = !isPro && preset !== "1W";
 
   return (
     <main className="min-h-screen bg-[oklch(0.06_0.01_145)] px-6 py-8">
@@ -105,12 +142,13 @@ export function DashboardContent() {
             <div className="relative">
               <select
                 value={preset}
-                onChange={(e) => setPreset(e.target.value as AnalyticsPreset)}
+                onChange={(e) => handlePresetChange(e.target.value as AnalyticsPreset)}
                 className="appearance-none rounded-xl border border-white/15 bg-white/5 py-2.5 pl-3 pr-8 text-sm text-zinc-300 outline-none hover:border-white/25 transition-all cursor-pointer"
               >
                 {DASHBOARD_PRESETS.map((p) => (
                   <option key={p.value} value={p.value}>
                     {p.label}
+                    {!isPro && p.value !== "1W" ? " 🔒" : ""}
                   </option>
                 ))}
               </select>
@@ -155,14 +193,15 @@ export function DashboardContent() {
           presetLabel={presetLabel}
         />
 
-        {/* Charts Row */}
+        {/* Charts Row — pass isGated so it can show the upgrade message */}
         <ChartsRow
           isPending={isPending}
-          chartData={chartData}
+          chartData={isGated ? [] : chartData}
           chartCounts={chartCounts}
-          breakdown={breakdown}
-          totalSpent={totalSpent}
+          breakdown={isGated ? [] : breakdown}
+          totalSpent={isGated ? 0 : totalSpent}
           presetLabel={presetLabel}
+          isGated={isGated}
         />
 
         {/* Recent Transactions — refreshes when txRefreshKey changes */}
@@ -178,4 +217,3 @@ export function DashboardContent() {
     </main>
   );
 }
-

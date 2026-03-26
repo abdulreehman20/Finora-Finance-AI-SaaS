@@ -2,6 +2,7 @@
 
 import {
   IconLoader2,
+  IconLock,
   IconTrendingDown,
   IconTrendingUp,
 } from "@tabler/icons-react";
@@ -27,6 +28,8 @@ interface ChartsRowProps {
   breakdown: { name: string; value: number; percentage: number }[];
   totalSpent: number;
   presetLabel: string;
+  /** When true, shows an upgrade-to-pro banner instead of chart data */
+  isGated?: boolean;
 }
 
 export function ChartsRow({
@@ -36,6 +39,7 @@ export function ChartsRow({
   breakdown,
   totalSpent,
   presetLabel,
+  isGated = false,
 }: ChartsRowProps) {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
@@ -72,7 +76,25 @@ export function ChartsRow({
           </div>
         </div>
 
-        {isPending ? (
+        {isGated ? (
+          <div className="flex h-72 flex-col items-center justify-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 border border-green-500/20">
+              <IconLock size={22} className="text-green-400" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-white">Pro Feature</p>
+              <p className="mt-1 text-xs text-zinc-500 max-w-[260px]">
+                Upgrade your plan to view monthly, 3-month, yearly or all-time analytics.
+              </p>
+            </div>
+            <a
+              href="/dashboard/settings?tab=billing"
+              className="rounded-xl bg-green-500 px-4 py-2 text-xs font-semibold text-white hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
+            >
+              Upgrade to Pro
+            </a>
+          </div>
+        ) : isPending ? (
           <div className="flex h-72 items-center justify-center">
             <IconLoader2 size={28} className="animate-spin text-green-500" />
           </div>

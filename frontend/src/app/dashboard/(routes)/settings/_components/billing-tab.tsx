@@ -37,7 +37,7 @@ export function BillingTab() {
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   async function fetchStatus() {
     setLoading(true);
@@ -56,16 +56,22 @@ export function BillingTab() {
   }, []);
 
   /**
-   * Uses the official Better Auth Polar plugin:
-   * authClient.checkout({ slug: "pro" })
-   * This calls GET /api/auth/checkout/pro on the backend, which creates
-   * a Polar checkout session and redirects the user to Polar's checkout page.
+   * Uses the official Better Auth Stripe plugin:
+   * authClient.subscription.upgrade({ plan: "pro", ... })
+   * This creates a Stripe Checkout session and redirects the user to Stripe.
    */
   async function handleUpgrade() {
     setCheckoutLoading(true);
     try {
-      await (authClient as any).checkout({ slug: "pro" });
-      // authClient.checkout() triggers a redirect — execution won't reach here on success
+      const { error } = await authClient.subscription.upgrade({
+        plan: "pro",
+        successUrl: `${window.location.origin}/dashboard/settings?tab=billing&success=1`,
+        cancelUrl: `${window.location.origin}/dashboard/settings?tab=billing`,
+      });
+      if (error) {
+        toast.error(error.message ?? "Failed to start checkout");
+      }
+      // Stripe will redirect — execution won't reach here on success
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to start checkout",
@@ -76,17 +82,38 @@ export function BillingTab() {
   }
 
   /**
-   * Opens the Polar Customer Portal where the user can manage their subscription.
-   * Uses authClient.customer.portal() from @polar-sh/better-auth.
+   * Cancels the active subscription via Better Auth Stripe plugin.
    */
-  async function handlePortal() {
-    setPortalLoading(true);
+  async function handleCancel() {
+    setCancelLoading(true);
     try {
-      await (authClient as any).customer.portal();
+      // List subscriptions and cancel the active one
+      const { data: subs, error } = await authClient.subscription.list();
+      if (error) {
+        toast.error(error.message ?? "Failed to fetch subscriptions");
+        return;
+      }
+      const activeSub = subs?.find(
+        (s) => s.status === "active" || s.status === "trialing",
+      );
+      if (!activeSub) {
+        toast.error("No active subscription found");
+        return;
+      }
+      const { error: cancelError } = await authClient.subscription.cancel({
+        subscriptionId: activeSub.id,
+        returnUrl: `${window.location.origin}/dashboard/settings?tab=billing`,
+      });
+      if (cancelError) {
+        toast.error(cancelError.message ?? "Failed to cancel subscription");
+        return;
+      }
+      toast.success("Subscription cancelled. You'll retain access until the period ends.");
+      await fetchStatus();
     } catch (err) {
-      toast.error("Could not open customer portal. Please try again.");
+      toast.error("Could not cancel subscription. Please try again.");
     } finally {
-      setPortalLoading(false);
+      setCancelLoading(false);
     }
   }
 
@@ -162,20 +189,20 @@ export function BillingTab() {
               </span>
             </div>
 
-            {/* Manage subscription (Pro users) */}
+            {/* Cancel subscription (Pro users) */}
             {isPro && (
               <button
                 type="button"
-                onClick={handlePortal}
-                disabled={portalLoading}
-                className="mt-4 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:border-white/20 transition-all disabled:opacity-40"
+                onClick={handleCancel}
+                disabled={cancelLoading}
+                className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:border-red-500/30 transition-all disabled:opacity-40"
               >
-                {portalLoading ? (
+                {cancelLoading ? (
                   <IconLoader2 size={14} className="animate-spin" />
                 ) : (
-                  <IconExternalLink size={14} />
+                  <IconX size={14} />
                 )}
-                Manage Subscription
+                Cancel Subscription
               </button>
             )}
           </div>
@@ -272,7 +299,7 @@ export function BillingTab() {
                 <IconCrown size={16} />
               )}
               {checkoutLoading
-                ? "Redirecting to Polar..."
+                ? "Redirecting to Stripe..."
                 : "Upgrade to Pro — $10/mo"}
             </button>
           )}

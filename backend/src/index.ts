@@ -64,9 +64,14 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     }
   });
 
-  server.on("error", (error) => {
-    logger.error("Server error:", error);
-  });
+  // server.on("error", (error: NodeJS.ErrnoException) => {
+  //   if (error.code === "EADDRINUSE") {
+  //     logger.error(`Port ${PORT} is already in use. Kill the existing process and restart.`);
+  //     process.exit(1);
+  //   } else {
+  //     logger.error("Server error:", error);
+  //   }
+  // });
 
   process.on("unhandledRejection", (reason, promise) => {
     logger.error("Unhandled Rejection at:", promise, "reason:", reason);

@@ -9,7 +9,7 @@ import {
 } from "@tabler/icons-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getAllReportsAction } from "@/actions/reports/actions";
+import { getAllReportsAction, sendReportAction } from "@/actions/reports/actions";
 import {
   Pagination,
   PaginationContent,
@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/pagination";
 import { buildPageButtons, formatReportDate } from "@/lib/helper";
 import type { Report } from "@/types/report";
-import { FAKE_REPORTS } from "./constants";
 import { ReportSettingsSheet } from "./report-settings-sheet";
 import { StatusBadge } from "./status-badge";
 
@@ -43,17 +42,14 @@ export function ReportsContent() {
     try {
       const result = await getAllReportsAction({ pageNumber, pageSize });
       const apiReports: Report[] = result.reports ?? [];
-      setReports(apiReports.length > 0 ? apiReports : FAKE_REPORTS);
+      setReports(apiReports);
       setTotalPages(result.totalPages ?? 1);
-      setTotal(
-        result.total ??
-          (apiReports.length === 0 ? FAKE_REPORTS.length : result.total),
-      );
+      setTotal(result.total ?? 0);
     } catch {
-      setReports(FAKE_REPORTS);
-      setTotal(FAKE_REPORTS.length);
+      setReports([]);
+      setTotal(0);
       setTotalPages(1);
-      setError(null);
+      setError("Failed to load reports. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -64,8 +60,8 @@ export function ReportsContent() {
   }, [fetchData]);
 
   const displayed = reports;
-  const displayedTotal = total || displayed.length;
-  const start = Math.min((pageNumber - 1) * pageSize + 1, displayedTotal);
+  const displayedTotal = total;
+  const start = displayedTotal > 0 ? Math.min((pageNumber - 1) * pageSize + 1, displayedTotal) : 0;
   const end = Math.min(pageNumber * pageSize, displayedTotal);
   const pageButtons = buildPageButtons(pageNumber, totalPages);
 
@@ -123,13 +119,19 @@ export function ReportsContent() {
                       </div>
                     </td>
                   </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={4} className="py-16 text-center">
+                      <p className="text-sm text-red-400">{error}</p>
+                    </td>
+                  </tr>
                 ) : displayed.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <IconClockRecord size={36} className="text-zinc-600" />
                         <p className="text-sm text-zinc-500">
-                          No reports have been sent yet.
+                          No reports available
                         </p>
                         <p className="text-xs text-zinc-600">
                           Configure your report settings to receive monthly
@@ -163,8 +165,14 @@ export function ReportsContent() {
                         <button
                           type="button"
                           className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
-                          onClick={() => {
-                            toast.info("Resend functionality coming soon.");
+                          onClick={async () => {
+                            try {
+                              await sendReportAction(report.id);
+                              toast.success("Report resent successfully!");
+                              fetchData();
+                            } catch {
+                              toast.error("Failed to resend report.");
+                            }
                           }}
                         >
                           <IconRefresh size={14} />

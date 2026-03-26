@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { openAPI, username } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "../db";
-import { account, session, user, verification } from "../db/schema/index";
+import { account, session, subscription, user, verification } from "../db/schema/index";
 import {
   deleteAccountEmailTemplate,
   passwordResetSuccessTemplate,
@@ -15,8 +15,9 @@ import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
+  apiVersion: "2026-02-25.clover", // Latest API version as of Stripe SDK v20.0.0
 });
+
 // ── Resend Client ────────────────────────────────────────────────────────────
 const resend = new Resend(process.env.RESEND_API_KEY);
 const appName = process.env.BETTER_AUTH_APP_NAME ?? "Finora AI";
@@ -26,6 +27,7 @@ const schema = {
   session,
   account,
   verification,
+  subscription,
 };
 
 export const auth = betterAuth({
@@ -76,6 +78,14 @@ export const auth = betterAuth({
   },
 
   rateLimit: { enabled: true, window: 60, max: 120 },
+  // trustedProxies: ["loopback"],
+  // trustedProxies: true,
+
+  // advanced: {
+  //   disableOriginCheck: true,
+  //   disableCSRFCheck: true, // Add this to keep CSRF disabled as per the log hint
+  //   useProxyHeaders: true
+  // },
 
   socialProviders: {
     google: {
@@ -95,29 +105,42 @@ export const auth = betterAuth({
         enabled: true,
         plans: [
           {
-            name: "free",
-            priceId: "free", // Placeholder since free plan doesn't usually have a stripe price in a typical implementation, or we just leave it out
-          },
-          {
             name: "pro",
-            priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
+            priceId: process.env.STRIPE_PRO_PRICE_ID!,
+            // $10/mo — set up in Stripe Dashboard
           },
         ],
-        onSubscriptionUpdate: async ({ event, subscription }) => {
-          // When a user upgrades or cancels, update their plan in the `user` table
-          const isPro = subscription.status === "active" || subscription.status === "trialing";
-          
+        /**
+         * Called when a subscription is updated via webhook
+         * (e.g. renewal, status change, plan change)
+         */
+        onSubscriptionComplete: async ({ subscription: sub }) => {
+          // After successful checkout, mark user as pro
+          const isPro =
+            sub.status === "active" || sub.status === "trialing";
           await db
             .update(user)
             .set({ plan: isPro ? "pro" : "free" })
-            .where(eq(user.id, subscription.referenceId));
+            .where(eq(user.id, sub.referenceId));
         },
-        onSubscriptionDeleted: async ({ event, subscription }) => {
-          // On deletion, revert to free
+        onSubscriptionUpdate: async ({ subscription: sub }) => {
+          // When a subscription updates (renewal, plan change, etc.)
+          const isPro =
+            sub.status === "active" || sub.status === "trialing";
+          await db
+            .update(user)
+            .set({ plan: isPro ? "pro" : "free" })
+            .where(eq(user.id, sub.referenceId));
+        },
+        onSubscriptionCancel: async () => {
+          // Subscription set to cancel at period end — access continues until deleted
+        },
+        onSubscriptionDeleted: async ({ subscription: sub }) => {
+          // Subscription is fully gone — revert to free
           await db
             .update(user)
             .set({ plan: "free" })
-            .where(eq(user.id, subscription.referenceId));
+            .where(eq(user.id, sub.referenceId));
         },
       },
     }),
